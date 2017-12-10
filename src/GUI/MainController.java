@@ -5,11 +5,8 @@
  */
 package GUI;
 
-import static com.itextpdf.text.SpecialSymbol.index;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -20,12 +17,12 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.beans.binding.Bindings;
+import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ListProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -35,12 +32,12 @@ import javafx.geometry.Pos;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
 import javafx.util.Callback;
@@ -71,14 +68,12 @@ public class MainController implements Initializable {
     private final ListProperty<AlunoTM> alunos = new SimpleListProperty();
     private HashMap<Integer, Aluno> alns = new HashMap<>();
 
-    @FXML
-    private TableView<RespostasTM> respostasTV;
-    @FXML
-    private TableColumn respostasNomeTC;
-    @FXML
-    private Spinner questoesSP;
-    @FXML
-    private Spinner matriculaSP;
+    @FXML private TableView<RespostasTM> respostasTV;
+    @FXML private TableColumn respostasNomeTC;
+    @FXML private Spinner<Integer> questoesSP;
+    SpinnerValueFactory<Integer> valueFactory;
+    private int nq = 60;
+    @FXML private Spinner matriculaSP;
     private final ListProperty<RespostasTM> respostas = new SimpleListProperty<>();
     
     
@@ -99,6 +94,8 @@ public class MainController implements Initializable {
     private ArrayList<Area> areas = new ArrayList<>();
     
     
+    
+    
    
 
     /**
@@ -107,6 +104,7 @@ public class MainController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         criarAreas();
+        
         alunos.set(FXCollections.observableArrayList());
         alunoTV.itemsProperty().bind(alunos);
         matriculaTC.setCellValueFactory(new PropertyValueFactory<Aluno, Integer>("cod"));
@@ -125,6 +123,15 @@ public class MainController implements Initializable {
         
         
         disciplinaCB.setItems(disciplinas);
+        
+        valueFactory = new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 10000, nq, 1);
+        questoesSP.setValueFactory(valueFactory);
+        questoesSP.valueProperty().addListener(new ChangeListener() {
+            @Override
+            public void changed(ObservableValue observable, Object oldValue, Object newValue) {
+                nq = (int)newValue;
+            }
+        });
     }
     
     public void criarAreas(){
@@ -286,10 +293,10 @@ public class MainController implements Initializable {
             resps = parseRespostas(f);
             if (resps.size() > 0) {
                 respostas.set(getRespostasTMList(resps));
-                int ncol = resps.get(0).getQuestoes().size();
+                int ncol = nq;//resps.get(0).getQuestoes().size();
                 for (int i = 0; i < ncol; i++) {
                     final int idx = i+1;
-                    TableColumn<RespostasTM, String> col = new TableColumn("Q" + (i + 1));
+                    TableColumn<RespostasTM, String> col = new TableColumn("Q" + idx);
                     col.setCellFactory(new Callback<TableColumn<RespostasTM, String>, TableCell<RespostasTM, String>>() {
                         @Override
                         public TableCell<RespostasTM, String> call(TableColumn<RespostasTM, String> param) {
@@ -391,17 +398,18 @@ public class MainController implements Initializable {
                 csvSeparador = ";";
             while (br.ready()) {
                 linha = br.readLine();
-                String rsp = linha.substring(linha.indexOf(csvSeparador), linha.length() - 12);
-                //System.out.println(rsp);
-                String mat = linha.substring(linha.length() - 11);
-                //System.out.println(mat);
-                System.out.println(mat);
-                Aluno a = alns.get(convertToInt(mat));
-                if(a==null)
-                    System.out.println("Aluno não encontrado: "+convertToInt(mat));
+                linha = linha.substring(linha.indexOf(csvSeparador));
+//                String rsp = linha.substring(0, 2*nq);
+//                System.out.println(rsp);
+//                String mat = linha.substring(2*nq);
+//                System.out.println(mat);
+                
+                Aluno a = alns.get(getMatricula(linha));
+//                if(a==null)
+//                    System.out.println("Aluno não encontrado: "+convertToInt(mat));
                 if (a != null) {
                     Respostas rps = new Respostas(a);
-                    ArrayList<Questao> qsts = getQuestoes(rsp);
+                    ArrayList<Questao> qsts = getQuestoes(linha);
                     for (Questao q : qsts) {
                         rps.addQuestao(q);
                     }
@@ -468,39 +476,42 @@ public class MainController implements Initializable {
         }
     }
     
-    
-    public int convertToInt(String txt){
-//        String[] mt = txt.split(csvSeparador);
-//        int mult = 100000;
-        String mt = txt.replace(csvSeparador, "");
-        mt = mt.replace("|", "");
-        mt = mt.replace(";", "");
-        mt = mt.replace("A", "0");
-        mt = mt.replace("B", "1");
-        mt = mt.replace("C", "2");
-        mt = mt.replace("D", "3");
-        mt = mt.replace("E", "4");
-        mt = mt.replace("F", "5");
-        mt = mt.replace("G", "6");
-        mt = mt.replace("H", "7");
-        mt = mt.replace("I", "8");
-        mt = mt.replace("J", "9");
-        if(mt.equals(""))
+    public int getMatricula(String txt){
+        String[] mt = txt.split(csvSeparador);
+        String result = "";
+        for(int i=nq+1; i<mt.length; i++){
+            result = result + mt[i];
+        }
+        result = result.replaceAll("[^A-J]", "");
+        result = result.replace("A", "0");
+        result = result.replace("B", "1");
+        result = result.replace("C", "2");
+        result = result.replace("D", "3");
+        result = result.replace("E", "4");
+        result = result.replace("F", "5");
+        result = result.replace("G", "6");
+        result = result.replace("H", "7");
+        result = result.replace("I", "8");
+        result = result.replace("J", "9");
+        if(result.equals(""))
             return 0;
-        return Integer.parseInt(mt);
+        //System.out.println("Matricula: "+result);
+        return Integer.parseInt(result);
     }
     
     public ArrayList<Questao> getQuestoes(String txt) {
         ArrayList<Questao> result = new ArrayList<>();
         String[] qs = txt.split(csvSeparador);
-        int i = 0;
-        for (String s : qs) {
-            if(i!=0){
-                Questao q = new Questao(i, s);
-                result.add(q);
-            }
-            i++;
+       // int i = 0;
+        for (int i=1; i<nq+1; i++){//String s : qs) {
+//            if(i==nq)
+//                return result;
+            //System.out.print(s);
+            Questao q = new Questao(i, qs[i]);
+            result.add(q);
+            //i++;
         }
+        //System.out.println();
         return result;
     }
 
