@@ -387,6 +387,8 @@ public class MainController implements Initializable {
         try {
             br = new BufferedReader(new FileReader(f));
             String linha = br.readLine();
+            if(linha.contains(";"))
+                csvSeparador = ";";
             while (br.ready()) {
                 linha = br.readLine();
                 String rsp = linha.substring(linha.indexOf(csvSeparador), linha.length() - 12);
