@@ -389,9 +389,14 @@ public class MainController implements Initializable {
             String linha = br.readLine();
             while (br.ready()) {
                 linha = br.readLine();
-                String rsp = linha.substring(0, linha.length() - 11);
+                String rsp = linha.substring(linha.indexOf(csvSeparador), linha.length() - 12);
+                //System.out.println(rsp);
                 String mat = linha.substring(linha.length() - 11);
+                //System.out.println(mat);
+                System.out.println(mat);
                 Aluno a = alns.get(convertToInt(mat));
+                if(a==null)
+                    System.out.println("Aluno não encontrado: "+convertToInt(mat));
                 if (a != null) {
                     Respostas rps = new Respostas(a);
                     ArrayList<Questao> qsts = getQuestoes(rsp);
@@ -468,16 +473,16 @@ public class MainController implements Initializable {
         String mt = txt.replace(csvSeparador, "");
         mt = mt.replace("|", "");
         mt = mt.replace(";", "");
-        mt = mt.replace("A", "1");
-        mt = mt.replace("B", "2");
-        mt = mt.replace("C", "3");
-        mt = mt.replace("D", "4");
-        mt = mt.replace("E", "5");
-        mt = mt.replace("F", "6");
-        mt = mt.replace("G", "7");
-        mt = mt.replace("H", "8");
-        mt = mt.replace("I", "9");
-        mt = mt.replace("J", "0");
+        mt = mt.replace("A", "0");
+        mt = mt.replace("B", "1");
+        mt = mt.replace("C", "2");
+        mt = mt.replace("D", "3");
+        mt = mt.replace("E", "4");
+        mt = mt.replace("F", "5");
+        mt = mt.replace("G", "6");
+        mt = mt.replace("H", "7");
+        mt = mt.replace("I", "8");
+        mt = mt.replace("J", "9");
         if(mt.equals(""))
             return 0;
         return Integer.parseInt(mt);
