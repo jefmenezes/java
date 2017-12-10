@@ -138,6 +138,7 @@ public class Pdf {
             Image mk = Image.getInstance("mk.png");
             mk.setAlignment(Element.ALIGN_CENTER);
             mk.scaleAbsolute(12f, 12f);
+            Collections.sort(alns);
             for(Aluno a : alns){
                 doc.setMargins(0, 0, 0, 0);
                 doc.add(img);

@@ -33,13 +33,28 @@ public class CSVParse {
                 try{
                     String linha = reader.readLine();
                     String[] d = linha.split(",");
+                    int dl = d.length;
                     int cd = Integer.parseInt(d[0]);
                     String nm = d[1];
-                    LocalDate nsc = parseDate(d[2]);
-                    String cpf = d[3];
-                    String rg = d[4];
-                    String fone = d[5];
-                    LocalDate mat = parseDate(d[6]);
+                    LocalDate nsc = LocalDate.now();
+                    String cpf = "0";
+                    String rg = "0";
+                    String fone = "0";
+                    LocalDate mat= LocalDate.now();
+                    if (dl > 2) {
+                        nsc = parseDate(d[2]);
+                        if(dl>3){
+                            cpf = d[3];
+                            if(dl>4){
+                                rg = d[4];
+                                if(dl>5){
+                                    fone = d[5];
+                                    if(dl>6)
+                                        mat = parseDate(d[6]);
+                                }
+                            }
+                        }
+                    }
                     Aluno a = new Aluno(cd, nm, nsc, cpf, rg, fone, mat);
                     alunos.add(a);
                 }catch(NumberFormatException e){};
@@ -95,6 +110,8 @@ public class CSVParse {
 //    }
     
     private LocalDate parseDate(String dt){
+        if(dt==null || dt.equals(""))
+            return LocalDate.now();
         String[] c = dt.split("/");
         String d = c[2]+"-"+c[1]+"-"+c[0];
         return LocalDate.parse(d);
