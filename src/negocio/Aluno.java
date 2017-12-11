@@ -7,6 +7,7 @@ package negocio;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 /**
  *
@@ -20,6 +21,7 @@ public class Aluno implements Serializable, Comparable<Object>{
     private String rg;
     private String fone;
     private LocalDate dtmat;
+    private Respostas respostas;
 
     public Aluno(int cod, String nome, LocalDate nsc, String cpf, String rg, String fone, LocalDate dtmat) {
         this.cod = cod;
@@ -29,6 +31,14 @@ public class Aluno implements Serializable, Comparable<Object>{
         this.rg = rg;
         this.fone = fone;
         this.dtmat = dtmat;
+    }
+
+    public Respostas getRespostas() {
+        return respostas;
+    }
+
+    public void setRespostas(Respostas respostas) {
+        this.respostas = respostas;
     }
 
     public int getCod() {

@@ -103,6 +103,7 @@
                   <items>
                         <MenuItem mnemonicParsing="false" onAction="#openClicked" text="Open" />
                         <MenuItem mnemonicParsing="false" onAction="#exportPDFClicked" text="Export PDF" />
+                        <MenuItem mnemonicParsing="false" onAction="#gerarRelatorio" text="Gerar Relatorio" />
                     <MenuItem mnemonicParsing="false" text="Close" />
                   </items>
                 </Menu>

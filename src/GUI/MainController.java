@@ -12,6 +12,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -398,7 +399,7 @@ public class MainController implements Initializable {
                 csvSeparador = ";";
             while (br.ready()) {
                 linha = br.readLine();
-                linha = linha.substring(linha.indexOf(csvSeparador));
+                linha = linha.substring(linha.indexOf(csvSeparador)+1);
 //                String rsp = linha.substring(0, 2*nq);
 //                System.out.println(rsp);
 //                String mat = linha.substring(2*nq);
@@ -409,6 +410,7 @@ public class MainController implements Initializable {
 //                    System.out.println("Aluno não encontrado: "+convertToInt(mat));
                 if (a != null) {
                     Respostas rps = new Respostas(a);
+                    a.setRespostas(rps);
                     ArrayList<Questao> qsts = getQuestoes(linha);
                     for (Questao q : qsts) {
                         rps.addQuestao(q);
@@ -439,8 +441,8 @@ public class MainController implements Initializable {
             String linha = br.readLine();
             while (br.ready()) {
                 linha = br.readLine();
-                String rsp = linha.substring(0, linha.length() - 11);
-                result = getQuestoes(rsp);
+                //String rsp = linha.substring(0, linha.length());
+                result = getQuestoes(linha);
             }   
             return result;
         } catch (FileNotFoundException ex) {
@@ -479,20 +481,21 @@ public class MainController implements Initializable {
     public int getMatricula(String txt){
         String[] mt = txt.split(csvSeparador);
         String result = "";
-        for(int i=nq+1; i<mt.length; i++){
-            result = result + mt[i];
+        for(int i=nq; i<mt.length; i++){
+            int x = (mt[i].charAt(0))-65;
+            result = result + x;// mt[i];
         }
-        result = result.replaceAll("[^A-J]", "");
-        result = result.replace("A", "0");
-        result = result.replace("B", "1");
-        result = result.replace("C", "2");
-        result = result.replace("D", "3");
-        result = result.replace("E", "4");
-        result = result.replace("F", "5");
-        result = result.replace("G", "6");
-        result = result.replace("H", "7");
-        result = result.replace("I", "8");
-        result = result.replace("J", "9");
+//        result = result.replaceAll("[^A-J]", "");
+//        result = result.replace("A", "0");
+//        result = result.replace("B", "1");
+//        result = result.replace("C", "2");
+//        result = result.replace("D", "3");
+//        result = result.replace("E", "4");
+//        result = result.replace("F", "5");
+//        result = result.replace("G", "6");
+//        result = result.replace("H", "7");
+//        result = result.replace("I", "8");
+//        result = result.replace("J", "9");
         if(result.equals(""))
             return 0;
         //System.out.println("Matricula: "+result);
@@ -503,11 +506,11 @@ public class MainController implements Initializable {
         ArrayList<Questao> result = new ArrayList<>();
         String[] qs = txt.split(csvSeparador);
        // int i = 0;
-        for (int i=1; i<nq+1; i++){//String s : qs) {
+        for (int i=0; i<nq; i++){//String s : qs) {
 //            if(i==nq)
 //                return result;
             //System.out.print(s);
-            Questao q = new Questao(i, qs[i]);
+            Questao q = new Questao(i+1, qs[i]);
             result.add(q);
             //i++;
         }
@@ -515,4 +518,16 @@ public class MainController implements Initializable {
         return result;
     }
 
+    @FXML
+    private void gerarRelatorio(){
+        FileChooser fc = new FileChooser();
+        File f = fc.showSaveDialog(null);
+        if(f!=null){
+            ArrayList<Aluno> alunos = new ArrayList<>(alns.values());
+            Collections.sort(alunos);
+            Pdf pdf = new Pdf(alunos);
+            pdf.gerarRelatorio(f);
+        }
+    }
+    
 }

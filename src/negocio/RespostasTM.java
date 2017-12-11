@@ -58,6 +58,7 @@ public class RespostasTM {
                 x.setCerto(true);
             else
                 x.setCerto(false);
+            x.setDisciplina(q.getDisciplina());
         }
         resp = new SimpleObjectProperty<>(respostas);
     }

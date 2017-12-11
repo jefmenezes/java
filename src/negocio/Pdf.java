@@ -27,9 +27,15 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.management.remote.JMXProviderException;
@@ -70,6 +76,8 @@ public class Pdf {
     private int midcolor = 50*50*50;
     private int tp = 704;
     private int ed = 85;
+    
+    private ArrayList<Aluno> alunos = new ArrayList<>();
 
     public Pdf(File file) {
 //        try {
@@ -183,6 +191,32 @@ public class Pdf {
         }
     }
     
+    public Pdf(ArrayList<Aluno> alns){
+        this.alunos = alns;
+        
+    }
+    
+    public void gerarRelatorio(File file) {
+       // doc = new Document(this.pageSize, leftMagin, rigthMargin, topMargin, bottonMargin);
+        doc.newPage();
+        try {
+            fos = new FileOutputStream(file);
+            writer = PdfWriter.getInstance(doc, fos);
+            doc.open();
+            doc.addTitle("Relatório de Notas");
+            doc.setPageSize(PageSize.A4);
+           // createCabecalho("", "", "", "");
+            addResultTable();
+            doc.close();
+        } catch (DocumentException ex) {
+            Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
     private void absText(String text, float x, float y) {
     try {
       PdfContentByte cb = writer.getDirectContent();
@@ -208,10 +242,9 @@ public class Pdf {
     public void createCabecalho(String escola, String materia, String professor, String turma){
         cabecalho = new PdfPTable(1);
         cabecalho.setWidthPercentage(100f);
-        addCabecalho("COLÉGIO ESTADUAL GOVERNADOR VALADARES", new BaseColor(205, 255, 204));
-        addCabecalho("CALENDÁRIO LETIVO PÓS GREVE - 2015", new BaseColor(153, 204, 255));
-        addCabecalho("DIURNO - ENSINO REGULAR DO 6º AO 9º ANO e MÉDIO", new BaseColor(255, 204, 153));
-        addCabecalho("NOTURNO - 9º ANO e MÉDIO", new BaseColor(255, 255, 153));
+        addCabecalho("CENTRO DE EXCELÊNCIA SANTOS DUMONT", new BaseColor(205, 255, 204));
+        addCabecalho("ENSINO MÉDIO INTEGRAL", new BaseColor(153, 204, 255));
+        addCabecalho("NOTAS DO III SIMULADO - 2017", new BaseColor(255, 204, 153));
         try {
             doc.add(cabecalho);
         } catch (DocumentException ex) {
@@ -263,6 +296,67 @@ public class Pdf {
             int[] widths = {3, 50, 8, 8, 8, 14};
             table.setWidths(widths);
             currentTable = table;
+        } catch (DocumentException ex) {
+            Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void addResultTable(){
+        DecimalFormat df2 = new DecimalFormat("##.#");
+        PdfPTable table = new PdfPTable(5);
+        table.getDefaultCell().setBorder(PdfPCell.NO_BORDER);
+        table.setWidthPercentage(100f);
+        int[] widths = {5,65,10,10,10};
+        try {
+            table.setWidths(widths);
+        } catch (DocumentException ex) {
+            Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        int n = 0;
+        for (Aluno a : alunos) {
+            Respostas resp = a.getRespostas();
+            if (resp != null) {
+                n++;
+                Phrase p = new Phrase("" + n);
+                PdfPCell nc = new PdfPCell(p);
+                table.addCell(nc);
+                PdfPCell namec = new PdfPCell(new Phrase(a.getNome()));
+                table.addCell(namec);
+                HashMap<Area, ArrayList<Questao>> questoes = new HashMap<>();
+
+                for (Questao q : resp.getQuestoes()) {
+                    Area area = q.getDisciplina().getArea();
+                    ArrayList<Questao> qst = questoes.get(area);
+                    if (qst == null) {
+                        qst = new ArrayList<>();
+                        questoes.put(area, qst);
+                    }
+                    qst.add(q);
+                }
+                Set<Area> areas = questoes.keySet();
+                //            int[] qa = new int[areas.size()];
+                //            int i = 0;
+                for (Area area : areas) {
+                    int nq = questoes.get(area).size();
+                    double vq = 10d / nq;
+                    System.out.println("Valor Questão: "+vq);
+                    double tot = 0;
+                    for (Questao q : questoes.get(area)) {
+                        if (q.isCerto()) {
+                            tot += vq;
+                        }
+                    }
+                    BigDecimal r = new BigDecimal(tot);
+                    
+                    r = r.round(new MathContext(2, RoundingMode.HALF_UP));
+                    PdfPCell areac = new PdfPCell(new Phrase("" + r.doubleValue()));
+                    table.addCell(areac);
+                }
+            }
+            table.completeRow();
+        }
+        try {
+            doc.add(table);
         } catch (DocumentException ex) {
             Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, null, ex);
         }
